@@ -3,30 +3,49 @@
     <h1>{{option.caption}}</h1>
     <div >
 
-      <div v-if="message" class="message">{{message}}</div>
-      <div v-for="value in option.values" :key="value.id" >
+      <div v-if="exclusions&&exclusions.length" class="message">{{exclusions}}</div>
+      <div v-for="value in option.values" :key="value.id" :class="isExcludedNow(value)?'disabled':''">
         <input
-          @change="$emit('change', value.id)"
+          :id="option.id+'_'+value.id"
           type="radio"
           :name="'option'+option.id"
-          :id="option.id+'_'+value.id"
-          v-bind:value="valueid"
-          :checked="valueid==value.id"
-          :disabled="value.disabled"
+          :value="value.id"
+          @change="$emit('change', value.id)"
+          :checked="value.id==selectedValue.id"
+          :disabled="isExcludedNow(value)"
         />
         <label :for="option.id+'_'+value.id">{{option.id+'_'+value.id + ' ' + value.caption}}</label>
         <div>{{option.message}}{{value.exclusions}}</div>
         
       </div>
     </div>
-    {{valueid}}
+    {{selectedValue}}
   </div>
 </template>
 
 <script>
+import { fromStringKey } from './ComponentA.vue';
 export default {
-  props: ["option", "valueid", "message" ],
-  methods: {}
+  props: ["option", "values", "exclusions" ],
+  methods: {
+    isExcludedNow: function(optionValue) {
+      if(optionValue.exclusions && optionValue.exclusions.length) {
+        for( const exclusion of optionValue.exclusions ) {
+          const [oId, vId] = fromStringKey(exclusion)
+          if(this.values[oId].id == vId) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+  },
+  computed: {
+    selectedValue: function() {
+      return this.values[this.option.id];
+    }
+
+  }
 };
 export class OptionValue {
   /**
@@ -61,5 +80,9 @@ export class Option {
 <style scoped>
 .message {
   border: 1px solid red
+}
+.disabled {
+  color: blue;
+  background-color: chartreuse;
 }
 </style>

@@ -319,16 +319,16 @@ module.exports = function () {
 /*!***************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib??vue-loader-options!./src/ComponentA.vue?vue&type=script&lang=js& ***!
   \***************************************************************************************************************************************/
-/*! exports provided: default */
+/*! exports provided: default, toStringKey, fromStringKey */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "toStringKey", function() { return toStringKey; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "fromStringKey", function() { return fromStringKey; });
 /* harmony import */ var _Dropdown_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Dropdown.vue */ "./src/Dropdown.vue");
 /* harmony import */ var lorem_ipsum__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lorem-ipsum */ "./node_modules/lorem-ipsum/dist/index.js");
 /* harmony import */ var lorem_ipsum__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lorem_ipsum__WEBPACK_IMPORTED_MODULE_1__);
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -366,28 +366,33 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   data: function data() {
     var options = optionGenerator();
     var values = options.map(function (o) {
-      return o.defaultValueId;
+      return {
+        id: o.defaultValueId,
+        timestamp: Date.now()
+      };
     });
-    var exclusions = [["0_0", "1_0"], ["0_0", "1_1"], ["2_0", "1_2"], ["2_0", "1_1"], ["2_0", "0_0"], ["3_0", "4_1"]];
-    this.exclusionMap = createExclusionMap(exclusions);
+    this.exclusions_ = [["0_0", "1_0"], ["0_0", "1_1"], ["2_0", "1_2"], ["2_0", "1_1"], ["2_0", "0_0"], ["3_0", "4_1"]];
+    this.exclusionMap = createExclusionMap(this.exclusions_);
     writExclusionsToOptions(this.exclusionMap, options);
     var validity = [];
     return {
       options: options,
       values: values,
-      exclusions: exclusions,
       validity: validity
     };
   },
   created: function created() {},
   methods: {
     dropchange: function dropchange(optionid, valId) {
-      this.$set(this.values, optionid, valId);
+      this.$set(this.values, optionid, {
+        id: valId,
+        timestamp: Date.now()
+      });
     },
-    message: function message(optionid) {
-      var ownValueId = this.values[optionid];
-      var exclusions = this.exclusionMap.get(this.toStringKey(optionid, ownValueId));
-      var message = "";
+    exclusions: function exclusions(optionid) {
+      var ownValue = this.values[optionid];
+      var exclusions = this.exclusionMap.get(toStringKey(optionid, ownValue.id));
+      var messages = [];
 
       if (exclusions) {
         var _iterator = _createForOfIteratorHelper(exclusions),
@@ -397,13 +402,19 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
           for (_iterator.s(); !(_step = _iterator.n()).done;) {
             var uuid = _step.value;
 
-            var _this$fromStringKey = this.fromStringKey(uuid),
-                _this$fromStringKey2 = _slicedToArray(_this$fromStringKey, 2),
-                oId = _this$fromStringKey2[0],
-                vId = _this$fromStringKey2[1];
+            var _fromStringKey = fromStringKey(uuid),
+                _fromStringKey2 = _slicedToArray(_fromStringKey, 2),
+                oId = _fromStringKey2[0],
+                vId = _fromStringKey2[1];
 
-            if (this.values[oId] == vId) {
-              message += "Current Selection (".concat(ownValueId, ") is not allowd with ").concat(uuid);
+            if (this.values[oId].id == vId) {
+              var otherValue = this.values[oId];
+              messages.push({
+                otherTimestamp: otherValue.timestamp,
+                ownTimestamp: ownValue.timestamp,
+                ownValueId: ownValue.id,
+                message: "Current Selection (".concat(ownValue, ") is not allowd with ").concat(uuid)
+              });
             }
           }
         } catch (err) {
@@ -413,13 +424,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
         }
       }
 
-      return message;
-    },
-    toStringKey: function toStringKey(oId, vId) {
-      return oId + "_" + vId;
-    },
-    fromStringKey: function fromStringKey(str) {
-      return str.split("_");
+      return messages;
     }
   },
   components: {
@@ -427,6 +432,12 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
   },
   watch: {}
 });
+var toStringKey = function toStringKey(oId, vId) {
+  return oId + "_" + vId;
+};
+var fromStringKey = function fromStringKey(str) {
+  return str.split("_");
+};
 /**
  * @param exclusions {[String,String][]}
  * @param options {Option[]}
@@ -505,13 +516,6 @@ var lorem = new lorem_ipsum__WEBPACK_IMPORTED_MODULE_1__["LoremIpsum"]({
   }
 });
 
-var OptionValueRef = function OptionValueRef(optionId, valueId) {
-  _classCallCheck(this, OptionValueRef);
-
-  this.optionId = optionId;
-  this.valueId = valueId;
-};
-
 function optionGenerator() {
   var options = [];
 
@@ -542,7 +546,22 @@ function optionGenerator() {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "OptionValue", function() { return OptionValue; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Option", function() { return Option; });
+/* harmony import */ var _ComponentA_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ComponentA.vue */ "./src/ComponentA.vue");
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return; var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e2) { throw _e2; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e3) { didErr = true; err = _e3; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 //
 //
@@ -569,9 +588,43 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 //
 //
 //
+
 /* harmony default export */ __webpack_exports__["default"] = ({
-  props: ["option", "valueid", "message"],
-  methods: {}
+  props: ["option", "values", "exclusions"],
+  methods: {
+    isExcludedNow: function isExcludedNow(optionValue) {
+      if (optionValue.exclusions && optionValue.exclusions.length) {
+        var _iterator = _createForOfIteratorHelper(optionValue.exclusions),
+            _step;
+
+        try {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+            var exclusion = _step.value;
+
+            var _fromStringKey = Object(_ComponentA_vue__WEBPACK_IMPORTED_MODULE_0__["fromStringKey"])(exclusion),
+                _fromStringKey2 = _slicedToArray(_fromStringKey, 2),
+                oId = _fromStringKey2[0],
+                vId = _fromStringKey2[1];
+
+            if (this.values[oId].id == vId) {
+              return true;
+            }
+          }
+        } catch (err) {
+          _iterator.e(err);
+        } finally {
+          _iterator.f();
+        }
+      }
+
+      return false;
+    }
+  },
+  computed: {
+    selectedValue: function selectedValue() {
+      return this.values[this.option.id];
+    }
+  }
 });
 var OptionValue =
 /**
@@ -636,7 +689,7 @@ module.exports = exports;
 var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(/*! ../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js");
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
-exports.push([module.i, "\n.message[data-v-6149e08a] {\n  border: 1px solid red\n}\n", ""]);
+exports.push([module.i, "\n.message[data-v-6149e08a] {\n  border: 1px solid red\n}\n.disabled[data-v-6149e08a] {\n  color: blue;\n  background-color: chartreuse;\n}\n", ""]);
 // Exports
 module.exports = exports;
 
@@ -11099,7 +11152,7 @@ var render = function() {
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
   return _c("div", [
-    _c("div", [_vm._v(_vm._s(_vm.message))]),
+    _c("div", [_vm._v(_vm._s(_vm.exclusions))]),
     _vm._v(" "),
     _c(
       "div",
@@ -11110,8 +11163,8 @@ var render = function() {
           staticClass: "dropflex",
           attrs: {
             option: option,
-            valueid: _vm.values[option.id],
-            message: _vm.message(option.id)
+            values: _vm.values,
+            exclusions: _vm.exclusions(option.id)
           },
           on: {
             change: function(ev) {
@@ -11152,45 +11205,54 @@ var render = function() {
     _c(
       "div",
       [
-        _vm.message
-          ? _c("div", { staticClass: "message" }, [_vm._v(_vm._s(_vm.message))])
+        _vm.exclusions && _vm.exclusions.length
+          ? _c("div", { staticClass: "message" }, [
+              _vm._v(_vm._s(_vm.exclusions))
+            ])
           : _vm._e(),
         _vm._v(" "),
         _vm._l(_vm.option.values, function(value) {
-          return _c("div", { key: value.id }, [
-            _c("input", {
-              attrs: {
-                type: "radio",
-                name: "option" + _vm.option.id,
-                id: _vm.option.id + "_" + value.id,
-                disabled: value.disabled
-              },
-              domProps: {
-                value: _vm.valueid,
-                checked: _vm.valueid == value.id
-              },
-              on: {
-                change: function($event) {
-                  return _vm.$emit("change", value.id)
+          return _c(
+            "div",
+            {
+              key: value.id,
+              class: _vm.isExcludedNow(value) ? "disabled" : ""
+            },
+            [
+              _c("input", {
+                attrs: {
+                  id: _vm.option.id + "_" + value.id,
+                  type: "radio",
+                  name: "option" + _vm.option.id,
+                  disabled: _vm.isExcludedNow(value)
+                },
+                domProps: {
+                  value: value.id,
+                  checked: value.id == _vm.selectedValue.id
+                },
+                on: {
+                  change: function($event) {
+                    return _vm.$emit("change", value.id)
+                  }
                 }
-              }
-            }),
-            _vm._v(" "),
-            _c("label", { attrs: { for: _vm.option.id + "_" + value.id } }, [
-              _vm._v(
-                _vm._s(_vm.option.id + "_" + value.id + " " + value.caption)
-              )
-            ]),
-            _vm._v(" "),
-            _c("div", [
-              _vm._v(_vm._s(_vm.option.message) + _vm._s(value.exclusions))
-            ])
-          ])
+              }),
+              _vm._v(" "),
+              _c("label", { attrs: { for: _vm.option.id + "_" + value.id } }, [
+                _vm._v(
+                  _vm._s(_vm.option.id + "_" + value.id + " " + value.caption)
+                )
+              ]),
+              _vm._v(" "),
+              _c("div", [
+                _vm._v(_vm._s(_vm.option.message) + _vm._s(value.exclusions))
+              ])
+            ]
+          )
         })
       ],
       2
     ),
-    _vm._v("\n  " + _vm._s(_vm.valueid) + "\n")
+    _vm._v("\n  " + _vm._s(_vm.selectedValue) + "\n")
   ])
 }
 var staticRenderFns = []
@@ -21096,14 +21158,18 @@ module.exports.formatError = function (err) {
 /*!****************************!*\
   !*** ./src/ComponentA.vue ***!
   \****************************/
-/*! exports provided: default */
+/*! exports provided: toStringKey, fromStringKey, default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _ComponentA_vue_vue_type_template_id_e9ff2cc6___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ComponentA.vue?vue&type=template&id=e9ff2cc6& */ "./src/ComponentA.vue?vue&type=template&id=e9ff2cc6&");
 /* harmony import */ var _ComponentA_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ComponentA.vue?vue&type=script&lang=js& */ "./src/ComponentA.vue?vue&type=script&lang=js&");
-/* empty/unused harmony star reexport *//* harmony import */ var _ComponentA_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ComponentA.vue?vue&type=style&index=0&lang=css& */ "./src/ComponentA.vue?vue&type=style&index=0&lang=css&");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "toStringKey", function() { return _ComponentA_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["toStringKey"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "fromStringKey", function() { return _ComponentA_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["fromStringKey"]; });
+
+/* harmony import */ var _ComponentA_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./ComponentA.vue?vue&type=style&index=0&lang=css& */ "./src/ComponentA.vue?vue&type=style&index=0&lang=css&");
 /* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
 
 
@@ -21135,13 +21201,17 @@ component.options.__file = "src/ComponentA.vue"
 /*!*****************************************************!*\
   !*** ./src/ComponentA.vue?vue&type=script&lang=js& ***!
   \*****************************************************/
-/*! exports provided: default */
+/*! exports provided: default, toStringKey, fromStringKey */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ComponentA_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../node_modules/babel-loader/lib!../node_modules/vue-loader/lib??vue-loader-options!./ComponentA.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/index.js?!./src/ComponentA.vue?vue&type=script&lang=js&");
-/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ComponentA_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "toStringKey", function() { return _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ComponentA_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["toStringKey"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "fromStringKey", function() { return _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ComponentA_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["fromStringKey"]; });
+
+ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ComponentA_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
 
 /***/ }),
 

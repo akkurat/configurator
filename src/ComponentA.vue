@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div>{{ message }}</div>
+    <div>{{ exclusions }}</div>
     <div class="flexcontainer">
       <dropdown
         class="dropflex"
@@ -8,8 +8,8 @@
         :key="option.id"
         :option="option"
         @change="function(ev){dropchange(option.id, ev)}"
-        :valueid="values[option.id]"
-        :message="message(option.id)"
+        :values="values"
+        :exclusions="exclusions(option.id)"
       />
     </div>
   </div>
@@ -21,8 +21,11 @@ import { LoremIpsum } from "lorem-ipsum";
 export default {
   data: function() {
     const options = optionGenerator();
-    const values = options.map(o => o.defaultValueId);
-    const exclusions = [
+    const values = options.map(o => ({
+      id: o.defaultValueId,
+      timestamp: Date.now()
+    }));
+    this.exclusions_ = [
       ["0_0", "1_0"],
       ["0_0", "1_1"],
       ["2_0", "1_2"],
@@ -30,42 +33,48 @@ export default {
       ["2_0", "0_0"],
       ["3_0", "4_1"]
     ];
-    this.exclusionMap = createExclusionMap( exclusions )
+    this.exclusionMap = createExclusionMap(this.exclusions_);
     writExclusionsToOptions(this.exclusionMap, options);
     const validity = [];
 
-    return { options, values, exclusions, validity };
+    return { options, values, validity };
   },
   created: () => {},
   methods: {
     dropchange: function(optionid, valId) {
-      this.$set(this.values, optionid, valId);
+      this.$set(this.values, optionid, { id: valId, timestamp: Date.now() });
     },
-    message: function(optionid) {
-      const ownValueId = this.values[optionid];
+    exclusions: function(optionid) {
+      const ownValue = this.values[optionid];
       const exclusions = this.exclusionMap.get(
-        this.toStringKey(optionid, ownValueId)
+        toStringKey(optionid, ownValue.id)
       );
 
-      let message = "";
+      let messages = [];
       if (exclusions) {
         for (const uuid of exclusions) {
-          const [oId, vId] = this.fromStringKey(uuid);
-          if (this.values[oId] == vId) {
-            message += `Current Selection (${ownValueId}) is not allowd with ${uuid}`;
+          const [oId, vId] = fromStringKey(uuid);
+          if (this.values[oId].id == vId) {
+            const otherValue = this.values[oId];
+            messages.push({
+              otherTimestamp: otherValue.timestamp,
+              ownTimestamp: ownValue.timestamp,
+              ownValueId: ownValue.id,
+              message: `Current Selection (${ownValue}) is not allowd with ${uuid}`
+            });
           }
         }
       }
-      return message;
+      return messages;
     },
 
-    toStringKey: (oId, vId) => oId + "_" + vId,
-    fromStringKey: str => str.split("_")
   },
   components: { dropdown: Dropdown },
   watch: {}
 };
 
+    export const toStringKey = (oId, vId) => oId + "_" + vId
+    export const fromStringKey = str => str.split("_")
 /**
  * @param exclusions {[String,String][]}
  * @param options {Option[]}
@@ -104,12 +113,6 @@ const lorem = new LoremIpsum({
     min: 4
   }
 });
-class OptionValueRef {
-  constructor(optionId, valueId) {
-    this.optionId = optionId;
-    this.valueId = valueId;
-  }
-}
 function optionGenerator() {
   const options = [];
   for (let i = 0; i < 10; i++) {
