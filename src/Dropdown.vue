@@ -1,49 +1,60 @@
 <template>
   <div>
     <h1>{{option.caption}}</h1>
-    <div >
+    <div>
+      <div v-if="allMessages" class="message" v-html="allMessages"></div>
 
-      <div v-if="exclusions&&exclusions.length" class="message">{{exclusions}}</div>
-      <div v-for="value in option.values" :key="value.id" :class="isExcludedNow(value)?'disabled':''">
-        <input
+      <select :id="'select_'+option.id" :name="'option'+option.id" v-model="val">
+        <option
+          v-for="value in option.values"
+          :key="value.id"
           :id="option.id+'_'+value.id"
-          type="radio"
-          :name="'option'+option.id"
           :value="value.id"
-          @change="$emit('change', value.id)"
-          :checked="value.id==selectedValue.id"
           :disabled="isExcludedNow(value)"
-        />
-        <label :for="option.id+'_'+value.id">{{option.id+'_'+value.id + ' ' + value.caption}}</label>
-        <div>{{option.message}}{{value.exclusions}}</div>
-        
-      </div>
+          :data-test="isExcludedNow(value)"
+        >{{option.id+'_'+value.id + ' ' + value.caption}}</option>
+
+      </select>
     </div>
     {{selectedValue}}
   </div>
 </template>
 
 <script>
-import { fromStringKey } from './ComponentA.vue';
 export default {
-  props: ["option", "values", "exclusions" ],
+  props: ["option", "values", "exclusions", 'isExcludedNow'],
   methods: {
-    isExcludedNow: function(optionValue) {
-      if(optionValue.exclusions && optionValue.exclusions.length) {
-        for( const exclusion of optionValue.exclusions ) {
-          const [oId, vId] = fromStringKey(exclusion)
-          if(this.values[oId].id == vId) {
-            return true;
-          }
-        }
-      }
-      return false;
+    emitChange(ev) {
+      this.$emit("change", ev.currentTarget.value);
     }
   },
   computed: {
     selectedValue: function() {
       return this.values[this.option.id];
+    },
+    val: {
+      get() {
+        return this.values[this.option.id].id;
+      },
+      set(val) {
+        this.$emit("change", val);
+      }
+    },
+    allMessages: function() {
+      let out =""
+      for( const value of this.option.values)
+      {
+        const message = this.isExcludedNow(value)
+        if( message ) {
+          out += message
+        }
+      }
+      return out
     }
+
+    
+
+
 
   }
 };
@@ -55,8 +66,20 @@ export class OptionValue {
   constructor(id, caption) {
     this.id = id;
     this.caption = caption;
-    this.disabled = false;
-    this.message = "";
+  }
+  /**
+   * 
+   * @param {Option} parent
+   */
+  setParent(parent) {
+    this.parent = parent
+  }
+  toString() {
+    let returnValue = this.id + ':' + this.caption
+    if(this.parent) {
+      returnValue = this.parent + "/" + returnValue
+    }
+    return returnValue
   }
 }
 
@@ -73,13 +96,17 @@ export class Option {
     this.id = id;
     this.caption = caption;
     this.values = values;
+    this.values.forEach( v => v.setParent(this))
     this.defaultValueId = defaultValueId;
+  }
+  toString() {
+    return this.id + ':' + this.caption
   }
 }
 </script>
 <style scoped>
 .message {
-  border: 1px solid red
+  border: 1px solid red;
 }
 .disabled {
   color: blue;

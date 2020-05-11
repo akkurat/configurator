@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div>{{ exclusions }}</div>
     <div class="flexcontainer">
       <dropdown
         class="dropflex"
@@ -10,6 +9,7 @@
         @change="function(ev){dropchange(option.id, ev)}"
         :values="values"
         :exclusions="exclusions(option.id)"
+        :isExcludedNow="isExcludedNow"
       />
     </div>
   </div>
@@ -67,6 +67,27 @@ export default {
       }
       return messages;
     },
+    isExcludedNow: function(optionValue) {
+
+      if (optionValue.exclusions && optionValue.exclusions.length) {
+
+        let out = ""
+        for (const exclusion of optionValue.exclusions) {
+          const [oId, vId] = fromStringKey(exclusion);
+          if (this.values[oId].id == vId) {
+            out += optionValue + '  incompatible with ' + this.findOptionValue(oId, vId) + '<br>'
+          }
+        }
+        return out.length ? out : false
+      }
+      return false;
+    },
+
+    findOptionValue: function(oId, vId) {
+      return this.options.find( v => v.id == oId).values.find( v => v.id == vId)
+    }
+
+
 
   },
   components: { dropdown: Dropdown },
